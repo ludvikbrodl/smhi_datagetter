@@ -267,11 +267,9 @@ public class XMLParse {
             stations.addAll(date.keySet());
         }
         int nbrStations = stations.size();
-        int nbrSheets = (nbrStations / (NUMBER_OF_ROWS_EACH_SHEET - 5)); //each sheet can only fit 255 columns.
+        int nbrSheets = ((nbrStations / (NUMBER_OF_ROWS_EACH_SHEET - 5)) + 1); //each sheet can only fit 255 columns.
         //i.e if nbrStations is 280, nbrStations/250 =
-        System.out.println(nbrStations);
-        System.out.println(nbrSheets);
-        Sheet[] sheet = new Sheet[nbrSheets + 1];
+        Sheet[] sheet = new Sheet[nbrSheets];
         for (int i = 0; i < sheet.length; i++) {
             sheet[i] = wb.createSheet("Min temp #" + (i + 1));
         }

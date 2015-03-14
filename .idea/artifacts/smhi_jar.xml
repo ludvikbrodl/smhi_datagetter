@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="smhi:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/smhi_jar</output-path>
+    <root id="archive" name="smhi.jar">
+      <element id="module-output" name="smhi" />
+      <element id="extracted-dir" path="$USER_HOME$/Desktop/poi-3.11/poi-3.11-20141221.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

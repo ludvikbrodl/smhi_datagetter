@@ -175,19 +175,32 @@ public class XMLParse {
         String metObsAPI = "http://opendata-download-metobs.smhi.se/api";
 
         // XMLParse openDataMetobsReader = new XMLParse();
+        Scanner scan = new Scanner(System.in);
+        System.out.println("Choose document, '19' is min-temp, '20' is max-temp, '2' is average-temp ");
+        // Specify which documents to collect.
+        // 19 is min-temp
+        // 20 is max-temp
+        String parameterKey = scan.nextLine();
+
         try {
-            // Specify which documents to collect.
-            // 19 is min-temp
-            // 20 is max-temp
-            String parameterKey = "19";
 
             Document stationsDocument = readXmlFromUrl(metObsAPI
                     + "/version/latest/parameter/" + parameterKey + ".xml");
             NodeList stationsNodeList = parseXML(stationsDocument,
                     "/metObsParameter/station/key");
 
+            System.out.println("Enter number of stations to output to file, 'all' is a valid input");
+            System.out.println("Note that all is approx 800 stations, this will take at least 2 min to complete");
+            String input = scan.nextLine();
+            scan.close();
+            int numberOfStationsToGet = 0;
+            if (input.equalsIgnoreCase("all")) {
+               numberOfStationsToGet = stationsNodeList.getLength();
+            } else {
+                numberOfStationsToGet = Integer.valueOf(input);
+            }
             //GO THROUGH ALL STATIONS
-            for (int i = 0; i < stationsNodeList.getLength(); i++) {
+            for (int i = 0; i < numberOfStationsToGet; i++) {
                 String stationId = stationsNodeList.item(i).getTextContent();
                 Document periodsDocument = readXmlFromUrl(metObsAPI
                         + "/version/latest/parameter/" + parameterKey
@@ -201,13 +214,13 @@ public class XMLParse {
                     String periodName = periodsNodeList.item(j).getTextContent();
                     if (periodName.equals("corrected-archive")) {
                         // NEW DOCUMENT STARTS HERE
-                        Scanner scan = new Scanner(readStringFromUrl(metObsAPI
+                        scan = new Scanner(readStringFromUrl(metObsAPI
                                 + "/version/latest/parameter/" + parameterKey
                                 + "/station/" + stationId + "/period/"
                                 + periodName + "/data.csv"));
                         scan.nextLine(); // SKIP FIRST ROW
                         String stationName = scan.nextLine().split(";")[0];
-                        System.out.println("Reading from station #" + i + " with ID: {" + stationId + "} name: {" + stationName + "}");
+                        System.out.println("Reading from station #" + (i + 1) + " with ID: {" + stationId + "} name: {" + stationName + "}");
                         String s = scan.nextLine();
                         //skip non data rows
                         while (!s.startsWith("Från Datum Tid")) {
@@ -219,13 +232,16 @@ public class XMLParse {
                             String[] array = s.split(";");
                             // Fr�n Datum Tid (UTC);Till Datum Tid
                             // (UTC);Representativt dygn;Lufttemperatur;Kvalitet
+                            if (array.length < 2) {
+                                break;
+                            }
                             if (!map.containsKey(array[2])) {
                                 map.put(array[2], new HashMap<String, Double>());
                             }
                             // Put value of specific day in the map.
                             HashMap<String, Double> stationMap = map
                                     .get(array[2]);
-                            stationMap.put(stationName + " " + stationId,
+                            stationMap.put(stationId,
                                     Double.valueOf(array[3]));
                             map.put(array[2], stationMap);
                         }
@@ -251,11 +267,11 @@ public class XMLParse {
             stations.addAll(date.keySet());
         }
         int nbrStations = stations.size();
-        int nbrSheets = (nbrStations/(NUMBER_OF_ROWS_EACH_SHEET - 5)); //each sheet can only fit 255 columns.
+        int nbrSheets = (nbrStations / (NUMBER_OF_ROWS_EACH_SHEET - 5)); //each sheet can only fit 255 columns.
         //i.e if nbrStations is 280, nbrStations/250 =
         System.out.println(nbrStations);
         System.out.println(nbrSheets);
-        Sheet[] sheet = new Sheet[nbrSheets];
+        Sheet[] sheet = new Sheet[nbrSheets + 1];
         for (int i = 0; i < sheet.length; i++) {
             sheet[i] = wb.createSheet("Min temp #" + (i + 1));
         }
@@ -320,7 +336,7 @@ public class XMLParse {
             fileOut.close();
             System.out.println("Output complete: smhi_workbook.xls");
         } catch (IOException e) {
-            // TODO Auto-generated catch block
+            System.out.println("Close the excel document or data cannot be written");
             e.printStackTrace();
         }
 
